@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+require('pg'); // Force inclusion for Vercel bundler
 const { connectDB, sequelize } = require('./config/db');
 
 dotenv.config();
