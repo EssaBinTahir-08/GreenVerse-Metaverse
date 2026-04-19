@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/config";
 import { Upload, Camera, Leaf, Droplets, Recycle, Zap, Bird, Sun, Waves } from "lucide-react";
 
 const SubmitAction = () => {
@@ -39,7 +40,7 @@ const SubmitAction = () => {
     formData.append("notes", notes);
 
     try {
-      const response = await fetch("http://localhost:5001/api/submissions", {
+      const response = await fetch(`${API_BASE_URL}/api/submissions`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${localStorage.getItem("token")}`

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldAlert, Lock, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { API_BASE_URL } from "@/config";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const AdminLogin = () => {
       // Map 'admin' username to the seeded email
       const email = formData.username === 'admin' ? 'admin@greenverse.io' : formData.username;
 
-      const response = await fetch("http://localhost:5001/api/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

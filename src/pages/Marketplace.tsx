@@ -5,6 +5,7 @@ import { Leaf, Wallet, Loader2, Info, Recycle, Zap, Droplets, Trophy, Bird, Sun,
 import { ethers } from "ethers";
 import { NFT_TREE_ABI } from "@/contractAbis";
 import { Badge } from "@/components/ui/badge";
+import { API_BASE_URL } from "@/config";
 
 // This should match the address deployed to your chosen network (e.g., Polygon)
 const NFT_TREE_CONTRACT_ADDRESS = import.meta.env.VITE_NFT_TREE_ADDRESS || "0x0000000000000000000000000000000000000000";
@@ -117,7 +118,7 @@ const Marketplace = () => {
 
       if (receipt && receipt.status === 1) {
         const token = localStorage.getItem("token");
-        const backendRes = await fetch("http://localhost:5001/api/nfts/mint", {
+        const backendRes = await fetch(`${API_BASE_URL}/api/nfts/mint`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({

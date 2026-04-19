@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { TreePine, Calendar, ExternalLink, Leaf, Globe, Plus } from "lucide-react";
+import { TreePine, Calendar, ExternalLink, Leaf, Globe, Plus, ShieldCheck } from "lucide-react";
 import { MARKETPLACE_NFTS } from "./Marketplace";
+import { API_BASE_URL } from "@/config";
 
 interface NFTTreeData {
   id: number;
@@ -27,7 +28,7 @@ const NFTTrees = () => {
 
     const fetchTrees = async () => {
       try {
-        const response = await fetch("http://localhost:5001/api/nfts/my-trees", {
+        const response = await fetch(`${API_BASE_URL}/api/nfts/my-trees`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

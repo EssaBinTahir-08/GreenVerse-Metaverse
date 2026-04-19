@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { TreePine, Calendar, ExternalLink, Leaf, Globe, Plus, ShieldCheck, Award, TrendingUp, ChevronRight, Clock } from "lucide-react";
 import { MARKETPLACE_NFTS } from "./Marketplace";
 import { Badge } from "@/components/ui/badge";
+import { API_BASE_URL } from "@/config";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -31,8 +32,8 @@ const Dashboard = () => {
         const headers = { Authorization: `Bearer ${token}` };
 
         const [treesRes, txsRes] = await Promise.all([
-          fetch("http://localhost:5001/api/nfts/my-trees", { headers }),
-          fetch("http://localhost:5001/api/nfts/my-transactions", { headers })
+          fetch(`${API_BASE_URL}/api/nfts/my-trees`, { headers }),
+          fetch(`${API_BASE_URL}/api/nfts/my-transactions`, { headers })
         ]);
 
         if (treesRes.ok) setTrees(await treesRes.json());

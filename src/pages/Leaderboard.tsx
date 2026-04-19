@@ -1,5 +1,6 @@
 import { Award, TrendingUp, Trophy, Medal, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/config";
 
 const Leaderboard = () => {
     const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
@@ -9,7 +10,7 @@ const Leaderboard = () => {
     useEffect(() => {
         const fetchLeaderboard = async () => {
             try {
-                const response = await fetch("http://localhost:5001/api/nfts/leaderboard");
+                const response = await fetch(`${API_BASE_URL}/api/nfts/leaderboard`);
                 if (response.ok) {
                     const data = await response.json();
 

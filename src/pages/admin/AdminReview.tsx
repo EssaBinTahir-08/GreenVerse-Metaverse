@@ -1,12 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { Check, X, Eye, Clock, User, ExternalLink, ShieldCheck } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { API_BASE_URL } from "@/config";
 
 const AdminReview = () => {
   const navigate = useNavigate();
@@ -18,7 +11,7 @@ const AdminReview = () => {
   useEffect(() => {
     const fetchPending = async () => {
       try {
-        const response = await fetch("http://localhost:5001/api/submissions/pending", {
+        const response = await fetch(`${API_BASE_URL}/api/submissions/pending`, {
           headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
         });
         if (response.ok) {
@@ -39,7 +32,7 @@ const AdminReview = () => {
 
   const handleReview = async (id: number, status: "Approved" | "Rejected") => {
     try {
-      const response = await fetch(`http://localhost:5001/api/submissions/${id}/review`, {
+      const response = await fetch(`${API_BASE_URL}/api/submissions/${id}/review`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -101,7 +94,7 @@ const AdminReview = () => {
                 <div className="lg:w-72 h-64 lg:h-auto relative group flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
                   <img
-                    src={`http://localhost:5001${sub.evidenceUrl}`}
+                    src={`${API_BASE_URL}${sub.evidenceUrl}`}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     alt="Evidence"
                   />
@@ -114,7 +107,7 @@ const AdminReview = () => {
                   </div>
 
                   <div className="absolute inset-0 z-30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm bg-black/40">
-                    <a href={`http://localhost:5001${sub.evidenceUrl}`} target="_blank" rel="noreferrer">
+                    <a href={`${API_BASE_URL}${sub.evidenceUrl}`} target="_blank" rel="noreferrer">
                       <Button size="sm" variant="secondary" className="gap-2 rounded-xl h-11 px-6 font-bold">
                         <Eye className="w-4 h-4" /> Inspect Alpha
                       </Button>
