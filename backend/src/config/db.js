@@ -8,6 +8,12 @@ const sequelize = new Sequelize(
     {
         dialect: 'postgres',
         logging: false,
+        dialectOptions: {
+            ssl: {
+                require: true,
+                rejectUnauthorized: false
+            }
+        }
     }
 );
 
@@ -17,7 +23,6 @@ const connectDB = async () => {
         console.log('PostgreSQL connection established successfully.');
     } catch (error) {
         console.error('PostgreSQL connection failed:', error.message);
-        process.exit(1);
     }
 };
 

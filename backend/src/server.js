@@ -37,15 +37,16 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5001;
 
-// Database Sync & Initialization
+// Database Sync & Initialization (Centralized)
 const init = async () => {
     try {
+        console.log('Initializing database synchronization...');
         await connectDB();
         require('./models');
         await sequelize.sync();
-        console.log('Database tables synced.');
+        console.log('Database tables ready.');
     } catch (err) {
-        console.error('Database initialization failed:', err);
+        console.error('Database initialization error:', err.message);
     }
 };
 
@@ -57,10 +58,9 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
         });
     });
 } else {
-    // In Vercel, we just need to ensure DB is connected on first request or similar
-    // Sequelize handles connection pooling, so as long as models are defined, 
-    // the first query will trigger the connection.
-    require('./models');
+    // In Vercel, we call init() but don't block the export.
+    // This allows Vercel to boot the function immediately while DB connects.
+    init();
 }
 
 // Export for Vercel Serverless
