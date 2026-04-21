@@ -1,50 +1,26 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Leaf, Menu, X, Wallet, LogOut, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Leaf, Menu, X, Wallet, LogOut, Globe2, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useWallet } from "@/context/WalletContext";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(localStorage.getItem("walletAddress"));
   const location = useLocation();
   const { toast } = useToast();
+  const wallet = useWallet();
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setWalletAddress(localStorage.getItem("walletAddress"));
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
-
-  const userRaw = localStorage.getItem("user");
   const token = localStorage.getItem("token");
   const isAuthenticated = !!token;
-  let user = null;
-  try {
-    user = userRaw ? JSON.parse(userRaw) : null;
-  } catch (e) {
-    console.error("Navbar: User Data Corruption Detected", e);
-  }
-  const isAdmin = user?.role === 'admin';
 
   const handleConnectWallet = async () => {
-    if (typeof (window as any).ethereum !== 'undefined') {
-      try {
-        const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          localStorage.setItem("walletAddress", accounts[0]);
-        }
-      } catch (error) {
-        console.error("User denied account access", error);
-      }
-    } else {
+    await wallet.connect();
+    if (wallet.error) {
       toast({
-        title: "MetaMask Required",
-        description: "Please install MetaMask to connect your wallet!",
-        className: "bg-black/90 backdrop-blur-2xl border border-destructive/50 text-white rounded-xl shadow-[0_0_30px_rgba(239,68,68,0.2)]",
+        title: "Wallet Error",
+        description: wallet.error,
+        className: "bg-black/90 border border-destructive/50 text-white rounded-xl",
       });
     }
   };
@@ -52,9 +28,27 @@ export const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    localStorage.removeItem("walletAddress");
+    wallet.disconnect();
     window.location.href = "/";
   };
+
+  const [metaOpen, setMetaOpen] = useState(false);
+  const metaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (metaRef.current && !metaRef.current.contains(e.target as Node)) setMetaOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const metaLinks = [
+    { to: '/metaverse', label: '🌍 3D World', desc: 'Walk the GreenVerse' },
+    { to: '/vr-world', label: '🥽 VR Cinema', desc: 'Fly-through experience' },
+    { to: '/plant-sensor', label: '📡 Plant Sensors', desc: 'Live IoT dashboard' },
+    { to: '/land', label: '🗺️ Land Map', desc: 'Buy & own parcels' },
+  ];
 
   const NavLinks = () => (
     <>
@@ -65,12 +59,55 @@ export const Navbar = () => {
           <Link to="/marketplace" className="text-foreground/80 hover:text-primary transition-colors font-medium">Marketplace</Link>
           <Link to="/digital-forest" className="text-foreground/80 hover:text-primary transition-colors font-medium">Digital Forest</Link>
           <Link to="/leaderboard" className="text-foreground/80 hover:text-primary transition-colors font-medium">Leaderboard</Link>
+
+          {/* Metaverse Dropdown */}
+          <div ref={metaRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setMetaOpen((o) => !o)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: metaOpen ? 'rgba(0,255,136,0.1)' : 'transparent',
+                border: `1px solid ${metaOpen ? '#00ff8844' : 'transparent'}`,
+                borderRadius: 10, padding: '5px 12px', cursor: 'pointer',
+                color: '#00ff88', fontWeight: 700, fontSize: 14, transition: 'all 0.2s',
+              }}
+            >
+              <Globe2 size={16} /> Metaverse <span style={{ fontSize: 10, transition: 'transform 0.2s', transform: metaOpen ? 'rotate(180deg)' : 'none', display: 'inline-block' }}>▾</span>
+            </button>
+
+            {metaOpen && (
+              <div style={{
+                position: 'absolute', top: '110%', left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(10,16,30,0.97)', border: '1px solid #00ff8822',
+                borderRadius: 16, padding: '10px 8px', minWidth: 220, zIndex: 100,
+                boxShadow: '0 10px 40px rgba(0,255,136,0.12)',
+                backdropFilter: 'blur(20px)',
+              }}>
+                {metaLinks.map((ml) => (
+                  <Link
+                    key={ml.to} to={ml.to}
+                    onClick={() => setMetaOpen(false)}
+                    style={{
+                      display: 'block', padding: '10px 14px', borderRadius: 12,
+                      textDecoration: 'none', transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,255,136,0.08)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 13 }}>{ml.label}</div>
+                    <div style={{ color: '#475569', fontSize: 11, marginTop: 1 }}>{ml.desc}</div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
       {!isAuthenticated && (
         <>
           <Link to="/" className="text-foreground/80 hover:text-primary transition-colors font-medium">Home</Link>
           <Link to="/features" className="text-foreground/80 hover:text-primary transition-colors font-medium">Features</Link>
+          <Link to="/vr-world" className="text-foreground/80 hover:text-primary transition-colors font-medium" style={{ color: '#00ff88' }}>🌍 Preview World</Link>
         </>
       )}
     </>
@@ -108,13 +145,40 @@ export const Navbar = () => {
                 </>
               ) : (
                 <>
+                  {/* Network warning */}
+                  {wallet.isConnected && !wallet.isCorrectNetwork && (
+                    <button
+                      onClick={wallet.switchNetwork}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.5)',
+                        borderRadius: 10, padding: '5px 10px', cursor: 'pointer',
+                        color: '#fb923c', fontSize: 11, fontWeight: 700,
+                      }}
+                    >
+                      <AlertTriangle className="w-3 h-3" /> Wrong Network
+                    </button>
+                  )}
+
                   <Button
                     variant="outline"
-                    className={`font-medium ${walletAddress ? "border-success/50 text-success bg-success/10 hover:bg-success/20" : "btn-outline-eco"}`}
-                    onClick={walletAddress ? undefined : handleConnectWallet}
+                    className={`font-medium ${
+                      wallet.isConnected
+                        ? wallet.isCorrectNetwork
+                          ? 'border-success/50 text-success bg-success/10 hover:bg-success/20'
+                          : 'border-orange-500/50 text-orange-400 bg-orange-500/10'
+                        : 'btn-outline-eco'
+                    }`}
+                    onClick={wallet.isConnected ? wallet.disconnect : handleConnectWallet}
+                    disabled={wallet.isConnecting}
                   >
                     <Wallet className="w-4 h-4 mr-2" />
-                    {walletAddress ? `${walletAddress.substring(0,6)}...${walletAddress.substring(walletAddress.length - 4)}` : "Connect Wallet"}
+                    {wallet.isConnecting
+                      ? 'Connecting…'
+                      : wallet.isConnected
+                        ? `${wallet.shortAddress}${wallet.balance ? ` · ${wallet.balance} MATIC` : ''}`
+                        : 'Connect Wallet'
+                    }
                   </Button>
 
                   <Button variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2" onClick={handleLogout} title="Logout">
@@ -153,12 +217,20 @@ export const Navbar = () => {
                 <>
                   <Button
                     variant="outline"
-                    className={`w-full justify-center ${walletAddress ? "border-success/50 text-success bg-success/10" : "btn-outline-eco"}`}
-                    onClick={() => { if(!walletAddress) handleConnectWallet(); setIsMenuOpen(false); }}
+                    className={`w-full justify-center ${
+                      wallet.isConnected ? 'border-success/50 text-success bg-success/10' : 'btn-outline-eco'
+                    }`}
+                    onClick={() => { if (!wallet.isConnected) handleConnectWallet(); setIsMenuOpen(false); }}
+                    disabled={wallet.isConnecting}
                   >
                     <Wallet className="w-4 h-4 mr-2" />
-                    {walletAddress ? `${walletAddress.substring(0,6)}...${walletAddress.substring(walletAddress.length - 4)}` : "Connect Wallet"}
+                    {wallet.isConnecting ? 'Connecting…' : wallet.isConnected ? wallet.shortAddress! : 'Connect Wallet'}
                   </Button>
+                  {wallet.isConnected && !wallet.isCorrectNetwork && (
+                    <button onClick={wallet.switchNetwork} className="text-orange-400 text-xs font-bold text-center">
+                      ⚠️ Switch to Polygon network
+                    </button>
+                  )}
                   <Button variant="ghost" className="w-full justify-start text-destructive hover:bg-destructive/10" onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" /> Logout
                   </Button>

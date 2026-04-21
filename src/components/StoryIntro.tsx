@@ -1,185 +1,267 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, TreePine, ShieldCheck, Database, Zap, Globe } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
+// ── Tunnel / Warp portal canvas ────────────────────────────────
+function WarpTunnel({ active }: { active: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const frameRef = useRef<number>(0);
+  const speedRef = useRef(0.3);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    let t = 0;
+
+    // When active=true, ramp up to warp speed for final entry
+    const targetSpeed = active ? 14 : 0.5;
+
+    const draw = () => {
+      speedRef.current += (targetSpeed - speedRef.current) * 0.06;
+      t += speedRef.current * 0.003;
+
+      ctx.fillStyle = `rgba(6,13,26,${active ? 0.15 : 0.25})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const RINGS = 24;
+      const LINES = 12;
+
+      // Warp tunnel rings
+      for (let r = 0; r < RINGS; r++) {
+        const depth = ((r / RINGS + t) % 1);
+        const radius = depth * Math.max(canvas.width, canvas.height) * 0.85;
+        const alpha = (1 - depth) * 0.6 * (active ? 1.4 : 1);
+        const hue = 145 + Math.sin(t * 2 + r * 0.5) * 20;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `hsla(${hue}, 100%, 55%, ${Math.min(alpha, 1)})`;
+        ctx.lineWidth = active ? 1.5 : 0.8;
+        ctx.stroke();
+      }
+
+      // Radial speed lines
+      for (let l = 0; l < LINES; l++) {
+        const angle = (l / LINES) * Math.PI * 2 + t * 0.4;
+        const innerR = 30 + speedRef.current * 4;
+        const outerR = 120 + speedRef.current * 18;
+        const alpha = 0.15 + speedRef.current * 0.02;
+
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(angle) * innerR, cy + Math.sin(angle) * innerR);
+        ctx.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+        ctx.strokeStyle = `rgba(0,255,136,${Math.min(alpha, 0.7)})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Central glow orb
+      const glowR = 30 + Math.sin(t * 3) * 8 + speedRef.current * 2;
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR * 3);
+      grad.addColorStop(0, `rgba(0,255,136,${0.3 + speedRef.current * 0.03})`);
+      grad.addColorStop(0.4, `rgba(0,200,100,0.15)`);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(cx, cy, glowR * 3, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      frameRef.current = requestAnimationFrame(draw);
+    };
+
+    draw();
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [active]);
+
+  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />;
+}
+
+// ── Floating particles ─────────────────────────────────────────
+function Particles() {
+  const particles = Array.from({ length: 30 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    delay: Math.random() * 4,
+    dur: 4 + Math.random() * 5,
+    size: 1 + Math.random() * 2,
+    opacity: 0.2 + Math.random() * 0.5,
+  }));
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+      {particles.map((p) => (
+        <div key={p.id} style={{
+          position: 'absolute',
+          left: `${p.x}%`,
+          bottom: '-10px',
+          width: p.size,
+          height: p.size,
+          borderRadius: '50%',
+          background: '#00ff88',
+          opacity: p.opacity,
+          animation: `floatUp ${p.dur}s ${p.delay}s infinite linear`,
+          boxShadow: `0 0 ${p.size * 3}px #00ff88`,
+        }} />
+      ))}
+      <style>{`
+        @keyframes floatUp {
+          0% { transform: translateY(0) translateX(0); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 0.5; }
+          100% { transform: translateY(-100vh) translateX(${Math.random() > 0.5 ? '+' : '-'}30px); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ── Main MetaVerse Portal Intro ───────────────────────────────
 export const StoryIntro = ({ onComplete }: { onComplete: () => void }) => {
   const [stage, setStage] = useState(0);
-  const [glitchText, setGlitchText] = useState("");
+  const [warping, setWarping] = useState(false);
+  const [exiting, setExiting] = useState(false);
 
-  const texts = [
-    "INITIALIZING NEURAL UPLINK...",
-    "SYNTHESIZING ENVIRONMENTAL NODES...",
-    "VERIFYING GUARDIAN PROTOCOLS...",
-    "ENTERING THE META-COMMONS."
+  const stages = [
+    { label: 'NEURAL UPLINK ESTABLISHED', sub: 'Connecting to GreenVerse network…', icon: '⬡' },
+    { label: 'ECOSYSTEM NODES ONLINE',    sub: 'Loading bioluminescent world…',     icon: '🌿' },
+    { label: 'GUARDIAN PROTOCOL ACTIVE',  sub: 'Syncing on-chain assets…',           icon: '🛡️' },
+    { label: 'ENTERING THE METAVERSE',    sub: 'Prepare for warp drive.',            icon: '🌍' },
   ];
 
   useEffect(() => {
-    // Stage 0 -> 1 (Establishing Connection)
-    const t0 = setTimeout(() => setStage(1), 2000);
-    // Stage 1 -> 2 (Synthesis)
-    const t1 = setTimeout(() => setStage(2), 4000);
-    // Stage 2 -> 3 (Security Check)
-    const t2 = setTimeout(() => setStage(3), 6000);
-    // Stage 3 -> End (Deployment)
-    const t3 = setTimeout(() => onComplete(), 8500);
+    const t0 = setTimeout(() => setStage(1), 1800);
+    const t1 = setTimeout(() => setStage(2), 3600);
+    const t2 = setTimeout(() => setStage(3), 5200);
+    const t3 = setTimeout(() => setWarping(true), 6400);       // trigger warp
+    const t4 = setTimeout(() => setExiting(true), 7400);       // fade out
+    const t5 = setTimeout(() => onComplete(), 8600);           // done
 
-    return () => {
-      clearTimeout(t0);
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
+    return () => [t0, t1, t2, t3, t4, t5].forEach(clearTimeout);
   }, [onComplete]);
-
-  // Subtle typewriter/glitch effect for current stage text
-  useEffect(() => {
-    let i = 0;
-    const fullText = texts[stage] || "";
-    setGlitchText("");
-    
-    const interval = setInterval(() => {
-      if (i < fullText.length) {
-        setGlitchText((prev) => prev + fullText.charAt(i));
-        i++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 40);
-
-    return () => clearInterval(interval);
-  }, [stage]);
 
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 1 }}
-        exit={{ opacity: 0, scale: 1.1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
-        className="fixed inset-0 z-[200] flex items-center justify-center bg-black overflow-hidden select-none"
+        animate={{ opacity: exiting ? 0 : 1, scale: exiting ? 1.08 : 1 }}
+        transition={{ duration: 1.2, ease: 'easeIn' }}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: '#06090f', overflow: 'hidden',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
       >
-        {/* ================= HUD PERSISTENT DATA ================= */}
-        <div className="absolute top-10 left-10 flex flex-col gap-2 font-mono text-[10px] text-emerald-500/40">
-           <div className="flex items-center gap-2">
-              <Zap className="w-3 h-3" />
-              <span>PWR: OPTIMAL</span>
-           </div>
-           <div className="flex items-center gap-2">
-              <Globe className="w-3 h-3" />
-              <span>LOC: 40.7128° N, 74.0060° W</span>
-           </div>
+        {/* Warp tunnel canvas */}
+        <WarpTunnel active={warping} />
+
+        {/* Floating particles */}
+        <Particles />
+
+        {/* HUD corners */}
+        <div style={{ position: 'absolute', top: 20, left: 24, fontFamily: 'monospace', fontSize: 10, color: 'rgba(0,255,136,0.35)', lineHeight: 1.8 }}>
+          <div>⬡ NEURAL_BRIDGE: ACTIVE</div>
+          <div>📡 NODES: {stage * 28}/112 synced</div>
+          <div>🔐 ENCRYPTION: AES-256</div>
+        </div>
+        <div style={{ position: 'absolute', top: 20, right: 24, fontFamily: 'monospace', fontSize: 10, color: 'rgba(0,255,136,0.35)', textAlign: 'right', lineHeight: 1.8 }}>
+          <div>GreenVerse v3.0</div>
+          <div>Polygon Mainnet</div>
+          <div style={{ color: 'rgba(0,255,136,0.6)' }}>● LIVE_SYNC</div>
+        </div>
+        <div style={{ position: 'absolute', bottom: 20, left: 24, fontFamily: 'monospace', fontSize: 9, color: 'rgba(0,255,136,0.2)', maxWidth: 280, lineHeight: 1.5 }}>
+          Blockchain environmental proof-of-work initializing.<br />Neural focus required for full immersion.
         </div>
 
-        <div className="absolute top-10 right-10 text-right font-mono text-[10px] text-emerald-500/40">
-           <p>SYSTEM.VERSION_3.0.4</p>
-           <p className="flex items-center gap-2 justify-end">
-              <span>ENCRYPTED_LINK: ACTIVE</span>
-              <ShieldCheck className="w-3 h-3" />
-           </p>
-        </div>
+        {/* Center content */}
+        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', pointerEvents: 'none' }}>
 
-        <div className="absolute bottom-10 left-10 font-mono text-[10px] text-emerald-500/20 max-w-xs">
-           <p>Initializing environmental proof-of-work protocols. Blockchain synchronization in progress. Please maintain neural focus.</p>
-        </div>
+          {/* Animated portal ring */}
+          <div style={{ position: 'relative', width: 180, height: 180, margin: '0 auto 36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Outer rotating ring */}
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              border: '1px solid rgba(0,255,136,0.2)',
+              animation: 'spinCW 8s linear infinite',
+            }} />
+            {/* Middle ring */}
+            <div style={{
+              position: 'absolute', inset: 16, borderRadius: '50%',
+              border: '1px dashed rgba(0,255,136,0.15)',
+              animation: 'spinCCW 12s linear infinite',
+            }} />
+            {/* Inner ring pulsing */}
+            <div style={{
+              position: 'absolute', inset: 32, borderRadius: '50%',
+              border: '2px solid rgba(0,255,136,0.35)',
+              animation: `${warping ? 'pulseRingFast' : 'pulseRing'} 1.5s ease-in-out infinite`,
+              boxShadow: warping ? '0 0 40px rgba(0,255,136,0.6), inset 0 0 40px rgba(0,255,136,0.1)' : '0 0 20px rgba(0,255,136,0.3)',
+            }} />
 
-        {/* ================= SCANLINE LAYER ================= */}
-        <div className="absolute inset-0 scanline z-10 pointer-events-none opacity-[0.4]"></div>
+            {/* Stage icon */}
+            <motion.div
+              key={stage}
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: warping ? 1.3 : 1 }}
+              transition={{ duration: 0.4 }}
+              style={{ fontSize: warping ? 52 : 44, lineHeight: 1, position: 'relative', zIndex: 1 }}
+            >
+              {stages[stage]?.icon}
+            </motion.div>
+          </div>
 
-        {/* ================= STAGE VISUALS ================= */}
-        <div className="relative z-20 flex flex-col items-center">
-            
-            {/* CENTRAL ICON PORTAL */}
-            <div className="relative w-48 h-48 flex items-center justify-center mb-16">
-               <motion.div 
-                 animate={{ 
-                     rotate: [0, 90, 180, 270, 360],
-                     scale: [1, 1.05, 1],
-                 }}
-                 transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                 className="absolute inset-0 border border-emerald-500/10 rounded-full"
-               />
-               <motion.div 
-                 animate={{ 
-                     rotate: [0, -90, -180, -270, -360],
-                     scale: [1, 1.1, 1],
-                 }}
-                 transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                 className="absolute inset-[10px] border border-emerald-500/5 rounded-full"
-               />
-
-               <AnimatePresence mode="wait">
-                  {stage === 0 && (
-                    <motion.div
-                      key="uplink"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="flex items-center justify-center"
-                    >
-                      <Database className="w-20 h-20 text-emerald-500 animate-pulse drop-shadow-[0_0_20px_rgba(16,185,129,0.5)]" />
-                    </motion.div>
-                  )}
-                  {stage === 1 && (
-                    <motion.div
-                      key="synthesis"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="flex items-center justify-center"
-                    >
-                      <Leaf className="w-24 h-24 text-primary drop-shadow-[0_0_30px_rgba(16,185,129,0.6)]" />
-                    </motion.div>
-                  )}
-                  {stage === 2 && (
-                    <motion.div
-                      key="protocol"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="flex items-center justify-center"
-                    >
-                      <ShieldCheck className="w-24 h-24 text-emerald-400 drop-shadow-[0_0_30px_rgba(52,211,153,0.7)]" />
-                    </motion.div>
-                  )}
-                  {stage === 3 && (
-                    <motion.div
-                      key="deployed"
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ type: "spring", bounce: 0.4 }}
-                      className="flex items-center justify-center"
-                    >
-                      <TreePine className="w-32 h-32 text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.8)]" />
-                    </motion.div>
-                  )}
-               </AnimatePresence>
+          {/* Stage text */}
+          <motion.div key={stage} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+            <div style={{
+              fontFamily: 'monospace', letterSpacing: '0.28em', fontSize: 11,
+              color: warping ? '#00ff88' : 'rgba(0,255,136,0.75)',
+              fontWeight: 900, marginBottom: 8,
+              textShadow: warping ? '0 0 20px #00ff88' : 'none',
+              transition: 'color 0.4s, text-shadow 0.4s',
+            }}>
+              {stages[stage]?.label}
             </div>
-
-            {/* MESSAGE LAYER */}
-            <div className="space-y-4 text-center">
-               <motion.p
-                 key={stage}
-                 initial={{ opacity: 0, scale: 0.95 }}
-                 animate={{ opacity: 1, scale: 1 }}
-                 className="font-mono text-xs text-emerald-500 uppercase tracking-[0.4em] font-black glitch-text h-6"
-               >
-                 {glitchText}
-               </motion.p>
-               
-               <div className="flex justify-center gap-1">
-                  {[0, 1, 2, 3].map((s) => (
-                    <div 
-                        key={s} 
-                        className={`h-1 w-12 rounded-full transition-all duration-700 ${stage >= s ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]" : "bg-emerald-900/40"}`} 
-                    />
-                  ))}
-               </div>
+            <div style={{ color: 'rgba(148,163,184,0.6)', fontSize: 12, letterSpacing: '0.05em' }}>
+              {stages[stage]?.sub}
             </div>
+          </motion.div>
 
+          {/* Progress bar */}
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 28 }}>
+            {stages.map((_, i) => (
+              <div key={i} style={{
+                height: 3, width: 40, borderRadius: 4,
+                background: stage >= i ? '#00ff88' : 'rgba(0,255,136,0.12)',
+                boxShadow: stage >= i ? '0 0 8px rgba(0,255,136,0.6)' : 'none',
+                transition: 'all 0.5s ease',
+              }} />
+            ))}
+          </div>
+
+          {/* Skip button */}
+          <button
+            onClick={onComplete}
+            style={{
+              marginTop: 36, background: 'transparent', border: 'none',
+              color: 'rgba(71,85,105,0.7)', fontSize: 11, cursor: 'pointer',
+              fontFamily: 'monospace', letterSpacing: '0.1em', pointerEvents: 'all',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(0,255,136,0.5)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(71,85,105,0.7)')}
+          >□ SKIP INTRO</button>
         </div>
 
-        {/* BACKGROUND 3D FEEL - Subtle Blur leakage */}
-        <div className="absolute inset-0 z-[-1] opacity-30 blur-3xl scale-125 bg-gradient-to-tr from-emerald-950 via-black to-emerald-900"></div>
-
+        <style>{`
+          @keyframes spinCW  { to { transform: rotate(360deg); } }
+          @keyframes spinCCW { to { transform: rotate(-360deg); } }
+          @keyframes pulseRing { 0%,100%{transform:scale(1);opacity:0.35} 50%{transform:scale(1.05);opacity:0.6} }
+          @keyframes pulseRingFast { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.12);opacity:1} }
+        `}</style>
       </motion.div>
     </AnimatePresence>
   );

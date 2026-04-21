@@ -91,8 +91,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ================= OPTIONAL ECOSYSTEM SECTIONS ================= */}
-      {/* (Kept minimal to maintain the Decentraland entry feel) */}
+      {/* ================= ECOSYSTEM FEATURES ================= */}
       <section className="relative z-20 py-32 bg-gradient-to-b from-transparent to-black px-6">
         <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -108,6 +107,85 @@ const Landing = () => {
                 <p className="text-slate-500 leading-relaxed text-sm">{item.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= METAVERSE ENTRY CTA ================= */}
+      <section className="relative z-20 py-24 px-6" style={{ background: 'linear-gradient(180deg, #000 0%, #030d08 50%, #060d1a 100%)' }}>
+        <div className="container mx-auto" style={{ maxWidth: 900, textAlign: 'center' }}>
+          {/* Glow orb */}
+          <div style={{
+            width: 220, height: 220, borderRadius: '50%', margin: '0 auto 32px',
+            background: 'radial-gradient(circle, rgba(0,255,136,0.25) 0%, rgba(0,255,136,0) 70%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 72,
+          }}>🌍</div>
+
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.2)',
+            borderRadius: 50, padding: '6px 18px', marginBottom: 20,
+            color: '#00ff88', fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase',
+          }}>
+            🔴 LIVE — Metaverse v1.0 Online
+          </div>
+
+          <h2 style={{
+            fontSize: 48, fontWeight: 900, margin: '0 0 16px',
+            background: 'linear-gradient(135deg, #00ff88 0%, #4ade80 40%, #a78bfa 100%)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            lineHeight: 1.1,
+          }}>
+            Enter a World Where<br />Trees Are Currency
+          </h2>
+
+          <p style={{ color: '#64748b', fontSize: 17, maxWidth: 560, margin: '0 auto 36px', lineHeight: 1.8 }}>
+            Walk through a bioluminescent 3D forest with your avatar. Own land parcels. Monitor real plant sensors. Trade NFT trees in a 3D marketplace. This is GreenVerse — a living, breathing metaverse.
+          </p>
+
+          {/* Feature pills */}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 36 }}>
+            {[
+              { icon: '🥽', text: 'WebXR VR Ready' },
+              { icon: '🕹️', text: 'WASD Avatar' },
+              { icon: '📡', text: 'Live IoT Sensors' },
+              { icon: '🗺️', text: '100 Land Parcels' },
+              { icon: '🌳', text: '4 Tree Species' },
+            ].map(({ icon, text }) => (
+              <div key={text} style={{
+                background: 'rgba(15,23,42,0.8)', border: '1px solid #1e293b',
+                borderRadius: 50, padding: '8px 16px',
+                color: '#94a3b8', fontSize: 13, fontWeight: 600,
+                display: 'flex', gap: 6, alignItems: 'center',
+              }}>
+                <span>{icon}</span> {text}
+              </div>
+            ))}
+          </div>
+
+          {/* CTAs */}
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/vr-world" style={{ textDecoration: 'none' }}>
+              <button style={{
+                padding: '15px 34px', borderRadius: 16, fontSize: 16, fontWeight: 800,
+                background: 'linear-gradient(135deg, #059669, #00ff88)',
+                border: 'none', color: '#000', cursor: 'pointer',
+                boxShadow: '0 0 40px rgba(0,255,136,0.3)',
+                transition: 'all 0.2s',
+              }}>
+                🌍 Preview VR World
+              </button>
+            </Link>
+            <Link to="/register" style={{ textDecoration: 'none' }}>
+              <button style={{
+                padding: '15px 34px', borderRadius: 16, fontSize: 16, fontWeight: 800,
+                background: 'transparent', border: '1px solid rgba(0,255,136,0.4)',
+                color: '#00ff88', cursor: 'pointer', transition: 'all 0.2s',
+              }}>
+                🚀 Join GreenVerse
+              </button>
+            </Link>
           </div>
         </div>
       </section>

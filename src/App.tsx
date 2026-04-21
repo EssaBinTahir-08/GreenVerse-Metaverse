@@ -1,10 +1,11 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { WalletProvider } from "@/context/WalletContext";
 
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -23,13 +24,18 @@ import Terms from "./pages/Terms";
 
 // Authenticated Pages
 import Dashboard from "./pages/Dashboard";
-import Marketplace from "./pages/Marketplace";
 import NFTTrees from "./pages/NFTTrees";
 import Leaderboard from "./pages/Leaderboard";
 import SubmitAction from "./pages/SubmitAction";
 import AdminReview from "./pages/admin/AdminReview";
 import AdminLogin from "./pages/admin/AdminLogin";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+
+// 🌍 Metaverse
+import Metaverse from "./pages/Metaverse";
+import VRExperience from "./pages/VRExperience";
+import Marketplace3D from "./pages/Marketplace3D";
+import PlantSensor from "./pages/PlantSensor";
+import MetaverseLand from "./pages/MetaverseLand";
 
 const queryClient = new QueryClient();
 
@@ -47,15 +53,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const UserLayout = () => (
-  <div className="flex flex-col min-h-screen bg-transparent relative">
-    <Navbar />
-    <main className="flex-1 pt-24 pb-12 relative z-10 w-full">
-      <Outlet />
-    </main>
-    <Footer />
-  </div>
-);
+
 
 // Global Auth Sanitizer
 const sanitizeAuth = () => {
@@ -80,6 +78,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <WalletProvider>
         <Toaster />
         <Sonner />
 
@@ -96,15 +95,23 @@ const App = () => {
               {/* User Private */}
               <Route path="/dashboard" element={<ProtectedRoute><Navbar /><main className="flex-1 pt-24"><Dashboard /></main><Footer /></ProtectedRoute>} />
               <Route path="/submit-action" element={<ProtectedRoute><Navbar /><main className="flex-1 pt-24"><SubmitAction /></main><Footer /></ProtectedRoute>} />
-              <Route path="/marketplace" element={<ProtectedRoute><Navbar /><main className="flex-1 pt-24"><Marketplace /></main><Footer /></ProtectedRoute>} />
+              {/* /marketplace now serves the upgraded 3D marketplace */}
+              <Route path="/marketplace" element={<ProtectedRoute><Navbar /><main className="flex-1 pt-24"><Marketplace3D /></main><Footer /></ProtectedRoute>} />
+              <Route path="/marketplace-3d" element={<Navigate to="/marketplace" replace />} />
               <Route path="/digital-forest" element={<ProtectedRoute><Navbar /><main className="flex-1 pt-24"><NFTTrees /></main><Footer /></ProtectedRoute>} />
               <Route path="/nft-trees" element={<Navigate to="/digital-forest" replace />} />
               <Route path="/my-assets" element={<Navigate to="/digital-forest" replace />} />
               <Route path="/leaderboard" element={<ProtectedRoute><Navbar /><main className="flex-1 pt-24"><Leaderboard /></main><Footer /></ProtectedRoute>} />
-              
-              {/* Admin Portal - STABILIZED */}
+
+              {/* Admin Portal */}
               <Route path="/admin" element={<AdminLogin />} />
               <Route path="/admin/review" element={<AdminLayout><AdminReview /></AdminLayout>} />
+
+              {/* 🌍 Metaverse Routes */}
+              <Route path="/metaverse" element={<ProtectedRoute><Metaverse /></ProtectedRoute>} />
+              <Route path="/vr-world" element={<VRExperience />} />
+              <Route path="/plant-sensor" element={<ProtectedRoute><Navbar /><main className="flex-1 pt-24"><PlantSensor /></main><Footer /></ProtectedRoute>} />
+              <Route path="/land" element={<ProtectedRoute><Navbar /><main className="flex-1 pt-24"><MetaverseLand /></main><Footer /></ProtectedRoute>} />
 
               {/* Extras */}
               <Route path="/features" element={<><Navbar /><main className="flex-1 pt-24"><Features /></main><Footer /></>} />
@@ -116,6 +123,7 @@ const App = () => {
             </Routes>
           </div>
         </BrowserRouter>
+        </WalletProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
